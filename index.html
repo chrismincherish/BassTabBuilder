@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Bass Tab Maker</title>
+<style>
+:root{--bg:#ecebe7;--bar:#fff;--ink:#1d1d1f;--mut:#6b6b70;--line:#cfcdc6;--acc:#0a74da;--on:#dcebfb;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17181a;--bar:#232427;--ink:#ececec;--mut:#9a9aa0;--line:#3a3b3f;--acc:#6db3f5;--on:#24384f}}
+:root[data-theme="dark"]{--bg:#17181a;--bar:#232427;--ink:#ececec;--mut:#9a9aa0;--line:#3a3b3f;--acc:#6db3f5;--on:#24384f}
+*{box-sizing:border-box}html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.4 system-ui,-apple-system,"Segoe UI",sans-serif}
+.bar{background:var(--bar);border-bottom:1px solid var(--line);padding:10px 14px;display:flex;flex-wrap:wrap;gap:8px 14px;align-items:end}
+label{display:flex;flex-direction:column;font-size:12px;color:var(--mut);gap:2px}
+input{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:6px;padding:5px 8px;min-width:0}
+input:focus-visible,button:focus-visible{outline:2px solid var(--acc);outline-offset:1px}
+.g{display:flex;gap:4px;align-items:center;flex-wrap:wrap}.g>span{font-size:12px;color:var(--mut);margin-right:2px}
+button{font:inherit;color:var(--ink);background:transparent;border:1px solid var(--line);border-radius:6px;padding:5px 10px;cursor:pointer}
+button.on{background:var(--on);border-color:var(--acc);color:var(--acc)}
+.hint{padding:8px 14px;font-size:13px;color:var(--mut)}
+.wrap{padding:6px 14px 40px;max-width:900px;margin:0 auto}
+.paper{background:#fff;border:1px solid var(--line);overflow-x:auto}
+#pages{overflow-x:auto}.pg{display:block;width:100%;min-width:560px;height:auto;aspect-ratio:595/842;background:#fff;border:1px solid var(--line);margin:0 0 14px;cursor:text;outline:none}svg *{pointer-events:none}svg [data-i]{pointer-events:all}svg [data-k]{pointer-events:all;cursor:grab;touch-action:none;user-select:none;-webkit-user-select:none}
+pre{background:var(--bar);border:1px solid var(--line);padding:12px;overflow-x:auto;font:13px/1.3 ui-monospace,Menlo,monospace}
+.hid{display:none}
+@media (pointer:coarse){button{padding:10px 14px;font-size:16px}input{font-size:16px}}
+@page{size:A4;margin:0}@media print{.bar,.hint,pre,.pb{display:none!important}body{background:#fff}.wrap{padding:0;max-width:none}#pages{overflow:visible}.soft{display:none!important}.pg{width:210mm;height:297mm;min-width:0;border:0;margin:0;page-break-after:always;break-after:page}.pg:last-child{page-break-after:auto;break-after:auto}}
+</style></head><body>
+<div class="bar pb">
+<label>Title<input id="title" placeholder="Song title"></label><label>Instrument<input id="inst" size="12"></label>
+<label>Artist<input id="comp" size="12" placeholder="Artist"></label><label>Tempo (bpm)<input id="tempo" size="4" inputmode="numeric" placeholder="90"></label>
+<label>Credit line<input id="credit" size="18"></label><label>First bar #<input id="start" size="3" inputmode="numeric"></label>
+</div>
+<div class="bar pb">
+<div class="g"><span>Bars</span><button id="baddb">+ Bar</button><button id="binsb">Insert bar after</button><button id="bdelb">Delete bar</button></div>
+<div class="g"><span>Length</span><button data-d="16">Whole</button><button data-d="8">Half</button><button data-d="4">Quarter</button><button data-d="2">Eighth</button><button data-d="1">16th</button><button data-d="0">Grace</button><button id="bdot">Dotted</button></div>
+<div class="g"><span>String</span><button data-s="0">G</button><button data-s="1">D</button><button data-s="2">A</button><button data-s="3">E</button></div>
+<div class="g"><button id="brest">Rest</button><button id="bmute">Mute X</button><button id="btie">Tie to next</button><button id="bdel">Delete</button></div>
+<div class="g"><span>Marks</span><button data-m="h">h</button><button data-m="p">p</button><button data-m="/">/ slide</button><button data-m="\">\ slide</button><button id="brs">|: Repeat</button><button id="bre">Repeat :|</button></div>
+<label>Section above this note<input id="sec" size="12" placeholder="Verse"></label>
+<label>Chord on this note<input id="ch" size="8" placeholder="Am"></label><label>Blue note on this note<input id="note" size="16" placeholder="Start with vocals"></label>
+<div class="g"><span>Nudge chord</span><button data-nc="-3,0">◀</button><button data-nc="3,0">▶</button><button data-nc="0,-3">▲</button><button data-nc="0,3">▼</button><button id="bcr">Reset position</button></div>
+<div class="g"><button id="btxt">Text tab</button><button id="bpdf">Export PDF</button><button id="bprint">Print</button><span id="pdfmsg" style="font-size:12px;color:var(--mut)"></span><button id="bnew">New tab</button><label style="flex-direction:row;align-items:center;gap:4px;font-size:13px"><input type="checkbox" id="ckr">Print rests</label><label style="flex-direction:row;align-items:center;gap:4px;font-size:13px"><input type="checkbox" id="ckl" checked>Legend</label></div>
+<div class="g"><span>Songs</span><button id="bexp">Export</button><button id="bimp">Import</button></div>
+</div>
+<div class="bar pb"><div class="g" id="pad"><span>Frets</span></div><div class="g"><button id="bl">←</button><button id="br">→</button></div></div>
+<div class="hint pb">Add bars with “+ Bar”. Click a bar and a string (or use ↑ ↓) to choose where to write, then type a fret number or tap a fret button. x for mute, space or the Rest button inserts a rest. Drag a chord, section label or blue note to move it. ← → move, Backspace deletes. Length keys: w h q e s, dot: “.”, tie: t.</div>
+<div class="wrap"><div id="iobox" class="hid pb"><textarea id="io" rows="6" style="width:100%;font:12px ui-monospace,Menlo,monospace;color:inherit;background:transparent;border:1px solid var(--line);border-radius:6px" placeholder="Paste tab JSON here, then press Load pasted JSON"></textarea><div class="g"><button id="bload">Load pasted JSON</button><input type="file" id="file" accept=".json,application/json"><span id="iomsg"></span></div></div><div id="pages"></div><pre id="txt" class="hid"></pre></div>
+<script>
+const S=['G','D','A','E'],W=612,BL='#0a74da',X0R=r=>r?40:80,MWR=r=>(555-X0R(r))/4,YT=r=>{const pg=r<6?0:1+Math.floor((r-6)/7),l=r<6?r:(r-6)%7;return pg*842+(pg?90:166)+104*l},rowAt=y=>{let b=0;for(let r=0;r<400;r++){if(YT(r)-40>y)break;b=r}return b},PAD=12,UREF=36;
+const blank=()=>({title:'Untitled Tab',inst:'Electric Bass',comp:'',tempo:'',credit:'',start:1,legend:true,rests:false,ev:[16,16,16,16].map(d=>({s:2,f:null,d}))});
+let D=blank();
+try{const j=localStorage.getItem('bt1');if(j)D=JSON.parse(j)}catch(e){}
+if(!D||!Array.isArray(D.ev)||!D.ev.length)D=blank();D.start=D.start||1;
+let cur=0,str=2,dur=4,dot=false,lastT=0,lastI=-1;
+const $=id=>document.getElementById(id),dd=()=>dot&&dur>1?dur*1.5:dur;
+function lay(){let m=0,p=0,L=[];D.ev.forEach((e,i)=>{if(p>=16){m++;p=0}L.push({e,i,m,p});p+=e.d});if(p>=16){m++;p=0}
+const by={};L.forEach(q=>(by[q.m]=by[q.m]||[]).push(q));let endx=X0R(Math.floor(m/4))+(m%4)*MWR(Math.floor(m/4))+PAD;
+Object.keys(by).forEach(k=>{k=+k;const a=by[k],r=Math.floor(k/4),mw=MWR(r),us=a.map(q=>q.e.d?q.e.d+2.5:5),tot=us.reduce((s,v)=>s+v,0),full=a.reduce((s,q)=>s+q.e.d,0)>=16,sc=(mw-2*PAD)/(full?tot:Math.max(tot,UREF));let c=0;a.forEach((q,i)=>{q.x=X0R(r)+(k%4)*mw+PAD+c*sc;c+=us[i]});if(k==m)endx=X0R(r)+(k%4)*mw+PAD+c*sc});
+return{L,end:{m,p},endx}}
+const esc=s=>String(s||'').replace(/[&<>]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c]));
+function draw(){
+const{L,end,endx}=lay(),n=D.ev.length,lastM=n&&end.p==0?end.m-1:end.m,rows=Math.floor(Math.max(lastM,cur>=n?end.m:0)/4)+1,H=YT(rows-1)+90,SF='Helvetica,Arial,sans-serif',TF='Times,Georgia,serif';
+let o=`<text x="40" y="60" font-family="${TF}" font-size="12">${esc(D.inst)}</text><text x="297.5" y="61" text-anchor="middle" font-family="${TF}" font-size="27">${esc(D.title)}</text><text x="555" y="92" text-anchor="end" font-family="${TF}" font-size="11.5">${esc(D.comp)}</text><text x="40" y="92" font-family="${SF}" font-size="10.5">${D.tempo?'Tempo: '+esc(D.tempo)+' bpm':''}</text>`;
+if(D.legend!==false)o+=`<g font-family="${SF}" font-size="8" fill="#777"><text x="40" y="112">Rhythm marks under the tab: stem = crotchet | 1 flag or beam = quaver | 2 = semiquaver | 3 = demisemiquaver</text><text x="40" y="123">dot = dotted note | open circle = minim | arc = tied note. Rests are not drawn (a gap = a rest).</text></g>`;
+for(let r=0;r<rows;r++){const y=YT(r),x0=X0R(r),mw=MWR(r);
+for(let i=0;i<4;i++)o+=`<line x1="${x0}" x2="555" y1="${y+i*8.4}" y2="${y+i*8.4}" stroke="#000" stroke-width=".6"/>`;
+for(let c=0;c<=4;c++)o+=`<line x1="${x0+c*mw}" x2="${x0+c*mw}" y1="${y}" y2="${y+25.2}" stroke="#000" stroke-width=".8"/>`;
+o+=`<line x1="${x0}" x2="555" y1="${y+60.2}" y2="${y+60.2}" stroke="#ccc" stroke-width=".5"/>`;
+if(r==0)o+=`<g font-family="${SF}" font-weight="700" font-size="9.5" text-anchor="middle"><text x="48.5" y="${y+7.6}">T</text><text x="48.5" y="${y+16}">A</text><text x="48.5" y="${y+24.4}">B</text></g><g font-family="${SF}" font-weight="700" font-size="12.5" text-anchor="middle"><text x="67" y="${y+10.8}">4</text><text x="67" y="${y+21.7}">4</text></g>`;
+const num=(D.start||1)+r*4;if(num>1)o+=`<text x="${x0}" y="${y-22}" font-family="${TF}" font-style="italic" font-size="8">${num}</text>`}
+{const fr=Math.floor(lastM/4),fx=X0R(fr)+((lastM%4)+1)*MWR(fr),fy=YT(fr);o+=`<line x1="${fx}" x2="${fx}" y1="${fy}" y2="${fy+25.2}" stroke="#000" stroke-width="2.6"/><line x1="${fx-3.6}" x2="${fx-3.6}" y1="${fy}" y2="${fy+25.2}" stroke="#000" stroke-width=".8"/>`}
+L.forEach(q=>{const r=Math.floor(q.m/4),mx=X0R(r)+(q.m%4)*MWR(r),mw=MWR(r),yy=YT(r),dc=(cx,cy)=>`<circle cx="${cx}" cy="${cy}" r="1.3"/>`;if(q.e.rs)o+=`<line x1="${mx+1}" x2="${mx+1}" y1="${yy}" y2="${yy+25.2}" stroke="#000" stroke-width="2.6"/><line x1="${mx+5}" x2="${mx+5}" y1="${yy}" y2="${yy+25.2}" stroke="#000" stroke-width=".8"/>${dc(mx+8.5,yy+8.4)}${dc(mx+8.5,yy+16.8)}`;if(q.e.re)o+=`<line x1="${mx+mw-1}" x2="${mx+mw-1}" y1="${yy}" y2="${yy+25.2}" stroke="#000" stroke-width="2.6"/><line x1="${mx+mw-5}" x2="${mx+mw-5}" y1="${yy}" y2="${yy+25.2}" stroke="#000" stroke-width=".8"/>${dc(mx+mw-8.5,yy+8.4)}${dc(mx+mw-8.5,yy+16.8)}`});
+if(cur>=n){const y=YT(Math.floor(end.m/4));o+=`<rect x="${endx-1.5}" y="${y-4}" width="2" height="32" fill="${BL}" opacity=".6"/><circle cx="${endx}" cy="${y+str*8.4}" r="6" fill="none" stroke="${BL}" stroke-width="1.2"/>`}
+let g=null,G=[],chR=-1,chE=-1e9;
+L.forEach((q,k)=>{const e=q.e,x=q.x,r=Math.floor(q.m/4),y=YT(r),b=y+25.2,y2=b+22,nx=L[k+1],sr=nx&&Math.floor(nx.m/4)==r,mxr=X0R(r)+((q.m%4)+1)*MWR(r);
+o+=`<rect data-i="${q.i}" x="${x-6}" y="${y-8}" width="${Math.max(12,(nx&&nx.m==q.m?nx.x:mxr)-x)}" height="66" fill="${q.i==cur?BL:'transparent'}" fill-opacity=".14"/>`+(q.i==cur?`<circle cx="${x}" cy="${y+str*8.4}" r="6" fill="none" stroke="${BL}" stroke-width="1.2"/>`:'');
+const O=k=>(e.o&&e.o[k])||[0,0];
+if(e.sec){const d=O('sec');o+=`<text data-k="sec" data-n="${q.i}" x="${x-6+d[0]}" y="${y-32+d[1]}" font-family="${SF}" font-size="10.5">${esc(e.sec)}</text>`}
+if(e.note){const d=O('note');o+=`<text data-k="note" data-n="${q.i}" x="${x-3+d[0]}" y="${y-19+d[1]}" font-family="${SF}" font-size="8.5" fill="${BL}">${esc(e.note)}</text>`}
+if(e.ch){if(r!=chR){chR=r;chE=-1e9}const d=O('ch'),cx=Math.max(x-3,chE+8)+d[0];chE=cx+e.ch.length*5.8;o+=`<text data-k="ch" data-n="${q.i}" x="${cx}" y="${y-7+d[1]}" font-family="${SF}" font-weight="700" font-size="9.5">${esc(e.ch)}</text>`}
+if(e.f==null){g=null;const c=y+12.6,rc=D.rests?'#000':'#9aa5b1',cl=D.rests?'':' class="soft"';
+if(e.d>=8)o+=`<rect${cl} x="${x-4}" y="${e.d>=16?c-4:c-1}" width="8" height="4" fill="${rc}"/>`;
+else if(e.d>=4)o+=`<path${cl} d="M${x-2} ${c-7}l4 4-4 4 4 4-3 2" fill="none" stroke="${rc}" stroke-width="1.5"/>`;
+else o+=`<path${cl} d="M${x-2} ${c-4}l5 -2M${x+2} ${c-6}l-3 10" stroke="${rc}" stroke-width="1.3" fill="none"/>`;
+if([3,6,12].includes(e.d))o+=`<circle${cl} cx="${x+5}" cy="${c-1}" r=".9" fill="${rc}"/>`}
+else{const yv=y+e.s*8.4,t=String(e.f).toUpperCase(),pv=L[k-1],tc=pv&&pv.e.t&&pv.e.f==e.f&&pv.e.s==e.s;
+if(!tc)o+=`<rect x="${x-t.length*2.7-1}" y="${yv-4.4}" width="${t.length*5.4+2}" height="8.8" fill="#fff"/><text x="${x}" y="${yv+3.4}" text-anchor="middle" font-family="${SF}" font-size="9.5">${t}</text>`;
+if(sr&&nx.e.f!=null&&nx.e.f!='x'&&e.f!='x'){const yn=y+nx.e.s*8.4,mxx=nx.m!=q.m?x+9:(x+nx.x)/2,yc=nx.m!=q.m?yv:(yv+yn)/2;
+if(e.m=='/')o+=`<line x1="${mxx-3.5}" y1="${yc+2.5}" x2="${mxx+3.5}" y2="${yc-2.5}" stroke="#000" stroke-width=".8"/>`;
+else if(e.m=='\\')o+=`<line x1="${mxx-3.5}" y1="${yc-2.5}" x2="${mxx+3.5}" y2="${yc+2.5}" stroke="#000" stroke-width=".8"/>`;
+else if(e.m=='h'||e.m=='p'){const ya=Math.min(yv,yn)-4.5;o+=`<path d="M${x+3} ${ya}Q${mxx} ${ya-6} ${nx.x-3} ${ya}" fill="none" stroke="#000" stroke-width=".8"/>`}}
+if(e.d>0&&e.d<16)o+=`<line x1="${x}" x2="${x}" y1="${b+5.5}" y2="${y2}" stroke="#000" stroke-width=".8"/>`;else if(e.d>=16)o+=`<circle cx="${x}" cy="${b+13}" r="2.2" fill="none" stroke="#000" stroke-width=".6"/>`;
+if(e.d==8||e.d==12)o+=`<circle cx="${x}" cy="${y2+2}" r="1.9" fill="none" stroke="#000" stroke-width=".6"/>`;
+if([6,12,3].includes(e.d))o+=`<circle cx="${x+3.5}" cy="${b+10}" r=".8"/>`;
+const key=q.m*10+Math.floor(q.p/4);
+if(e.d>0&&e.d<=3){if(g&&g.key==key&&g.last==k-1){g.it.push(q);g.last=k}else{g={key,it:[q],last:k};G.push(g)}}else g=null;
+if(e.t&&sr){o+=`<path d="M${x} ${y2+3.6}Q${(x+nx.x)/2} ${y2+9} ${nx.x} ${y2+3.6}" fill="none" stroke="#000" stroke-width=".7"/>`}}});
+G.forEach(g=>{const it=g.it,y2=YT(Math.floor(it[0].m/4))+47.2;
+if(it.length>1)o+=`<line x1="${it[0].x-.8}" x2="${it[it.length-1].x+.8}" y1="${y2}" y2="${y2}" stroke="#000" stroke-width="1.6"/>`;
+else o+=`<path d="M${it[0].x} ${y2}Q${it[0].x+4} ${y2-1} ${it[0].x+4.6} ${y2-6}${it[0].e.d==1?`M${it[0].x} ${y2-3}Q${it[0].x+4} ${y2-4} ${it[0].x+4.6} ${y2-9}`:''}" fill="none" stroke="#000" stroke-width="1"/>`;
+it.forEach((q,i)=>{if(q.e.d!=1)return;const nx=it[i+1],pv=it[i-1];
+if(nx&&nx.e.d==1)o+=`<line x1="${q.x}" x2="${nx.x}" y1="${y2-3}" y2="${y2-3}" stroke="#000" stroke-width="1.6"/>`;
+else if(!(pv&&pv.e.d==1)&&it.length>1)o+=`<line x1="${q.x}" x2="${q.x+(nx?4:-4)}" y1="${y2-3}" y2="${y2-3}" stroke="#000" stroke-width="1.6"/>`})});
+const NP=Math.floor(YT(rows-1)/842)+1;let pgs='';for(let k=0;k<NP;k++)pgs+=`<svg class="pg" tabindex="0" viewBox="0 ${k*842} 595 842" role="img" aria-label="Page ${k+1}">${o}<text x="297.5" y="${k*842+822}" text-anchor="middle" font-family="${TF}" font-size="10">${esc(D.credit)}</text><text x="555" y="${k*842+822}" text-anchor="end" font-family="${SF}" font-size="8" fill="#999">${NP>1?'Page '+(k+1)+' of '+NP:''}</text></svg>`;$('pages').innerHTML=pgs;
+const ce=D.ev[cur];if(ce&&ce.f!=null){const mm={0:[0,0],16:[16,0],8:[8,0],4:[4,0],2:[2,0],1:[1,0],12:[8,1],6:[4,1],3:[2,1]}[ce.d];if(mm){dur=mm[0];dot=!!mm[1]}}
+document.querySelectorAll('[data-d]').forEach(b=>b.classList.toggle('on',+b.dataset.d==dur));
+document.querySelectorAll('[data-s]').forEach(b=>b.classList.toggle('on',+b.dataset.s==str));
+$('bdot').classList.toggle('on',dot);document.querySelectorAll('[data-m]').forEach(b=>b.classList.toggle('on',!!ce&&ce.m==b.dataset.m));
+const e=D.ev[cur];if(document.activeElement!==$('sec'))$('sec').value=e?e.sec||'':'';if(document.activeElement!==$('note'))$('note').value=e?e.note||'':'';if(document.activeElement!==$('ch'))$('ch').value=e?e.ch||'':'';
+if(!$('txt').classList.contains('hid'))$('txt').textContent=ascii();
+try{localStorage.setItem('bt1',JSON.stringify(D))}catch(x){}}
+function ascii(){const{L}=lay(),nm=(L.length?L[L.length-1].m:0)+1,R=[];
+for(let m=0;m<nm;m+=4){let ls=S.map(s=>s+'|');
+for(let k=m;k<Math.min(m+4,nm);k++){L.filter(o=>o.m==k).forEach(o=>{const e=o.e,w=e.d<=1?2:e.d<=2?3:e.d<=4?4:e.d<=8?6:8,t=e.f==null?'':String(e.f).toUpperCase()+(e.m||'');
+ls=ls.map((l,si)=>{const on=si==e.s&&t;return l+(on?t:'')+'-'.repeat(Math.max(1,w-(on?t.length:0)))})});ls=ls.map(l=>l+'|')}
+R.push(ls.join('\n'))}return R.join('\n\n')}
+function putRest(){D.ev.splice(Math.min(cur,D.ev.length),0,{s:str,f:null,d:dd()});cur++;lastI=-1}
+const SPL=n=>{const r=[];for(const v of [16,12,8,6,4,3,2,1])while(n>=v){r.push(v);n-=v}return r};
+function put(f){const d=dd(),e={s:str,f,d};
+if(cur<D.ev.length){const t=D.ev[cur],ne=Object.assign({},t,e);
+if(t.f==null){let av=0,j=cur;while(j<D.ev.length&&D.ev[j].f==null&&av<d){av+=D.ev[j].d;j++}
+if(av>=d)D.ev.splice(cur,j-cur,ne,...SPL(av-d).map(v=>({s:str,f:null,d:v})));else D.ev[cur]=ne}
+else D.ev[cur]=ne}
+else D.ev.push(e);
+cur++}
+function padEnd(){const{end}=lay();if(end.p>0)SPL(16-end.p).forEach(v=>D.ev.push({s:2,f:null,d:v}))}
+function fret(c){const n=Date.now(),l=D.ev[lastI];
+if(n-lastT<500&&l&&/^[12]$/.test(l.f)&&/^\d$/.test(c)&&+(l.f+c)<=24&&lastI==cur-1)l.f+=c;else{put(c);lastI=cur-1}lastT=n}
+function tie(){if(cur>0)D.ev[cur-1].t=!D.ev[cur-1].t}
+addEventListener('keydown',k=>{if(/INPUT|TEXTAREA/.test(k.target.tagName)||k.ctrlKey||k.metaKey||k.altKey)return;const n=D.ev.length;let h=1;
+if(/^[0-9]$/.test(k.key))fret(k.key);else if(k.key=='x')put('x');else if(k.key==' '||k.key=='r')putRest();
+else if(k.key=='ArrowLeft')cur=Math.max(0,cur-1);else if(k.key=='ArrowRight')cur=Math.min(n,cur+1);
+else if(k.key=='ArrowUp')str=Math.max(0,str-1);else if(k.key=='ArrowDown')str=Math.min(3,str+1);
+else if(k.key=='Backspace'){if(cur>0)D.ev.splice(--cur,1)}else if(k.key=='Delete')D.ev.splice(cur,1);
+else if('whqesg'.includes(k.key)){dur={w:16,h:8,q:4,e:2,s:1,g:0}[k.key];if(D.ev[cur])D.ev[cur].d=dd()}else if(k.key=='.'){dot=!dot;if(D.ev[cur])D.ev[cur].d=dd()}else if(k.key=='t')tie();else h=0;
+if(h){k.preventDefault();draw()}});
+$('pages').addEventListener('click',e=>{const sv=e.target.closest('svg');if(!sv)return;const dk=e.target.closest('[data-k]');if(dk){cur=+dk.dataset.n;draw();return}const r=e.target.closest('[data-i]'),bb=sv.getBoundingClientRect(),vb=sv.viewBox.baseVal,yy=(e.clientY-bb.top)*(vb.height/bb.height)+vb.y,rw=rowAt(yy),rel=yy-YT(rw);if(rel>-6&&rel<31)str=Math.max(0,Math.min(3,Math.round(rel/8.4)));cur=r?+r.dataset.i:D.ev.length;sv.focus();draw()});
+document.querySelectorAll('[data-d]').forEach(b=>b.onclick=()=>{dur=+b.dataset.d;if(D.ev[cur])D.ev[cur].d=dd();draw()});
+document.querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{str=+b.dataset.s;draw()});
+$('bdot').onclick=()=>{dot=!dot;if(D.ev[cur])D.ev[cur].d=dd();draw()};$('brest').onclick=()=>{putRest();draw()};$('bmute').onclick=()=>{put('x');draw()};
+$('btie').onclick=()=>{tie();draw()};$('bdel').onclick=()=>{if(cur<D.ev.length)D.ev.splice(cur,1);else if(cur>0)D.ev.splice(--cur,1);draw()};
+$('btxt').onclick=()=>{$('txt').classList.toggle('hid');draw()};$('bprint').onclick=()=>{try{window.print()}catch(e){}};
+let nt=0;$('bnew').onclick=()=>{if(!nt){nt=setTimeout(()=>{nt=0;$('bnew').textContent='New tab'},3000);$('bnew').textContent='Click again to start over';return}clearTimeout(nt);nt=0;$('bnew').textContent='New tab';setD(blank())};
+$('baddb').onclick=()=>{padEnd();D.ev.push({s:2,f:null,d:16});cur=D.ev.length-1;draw()};
+$('binsb').onclick=()=>{const{L}=lay(),q=L[Math.min(cur,L.length-1)];let at;if(q.m==L[L.length-1].m){padEnd();at=D.ev.length}else at=L.filter(x=>x.m==q.m).pop().i+1;D.ev.splice(at,0,{s:2,f:null,d:16});cur=at;draw()};
+$('bdelb').onclick=()=>{const{L}=lay(),q=L[Math.min(cur,L.length-1)],ix=L.filter(x=>x.m==q.m).map(x=>x.i);D.ev.splice(ix[0],ix.length);if(!D.ev.length)D.ev.push({s:2,f:null,d:16});cur=Math.min(ix[0],D.ev.length-1);draw()};
+document.querySelectorAll('[data-m]').forEach(b=>b.onclick=()=>{const e=D.ev[cur];if(e&&e.f!=null){e.m=e.m==b.dataset.m?'':b.dataset.m;draw()}});
+['rs','re'].forEach(k=>$('b'+k).onclick=()=>{const e=D.ev[Math.min(cur,D.ev.length-1)];if(e){e[k]=!e[k];draw()}});
+const pd=$('pad');for(let i=0;i<=12;i++){const b=document.createElement('button');b.textContent=i;b.onclick=()=>{put(String(i));draw()};pd.appendChild(b)}
+$('bl').onclick=()=>{cur=Math.max(0,cur-1);draw()};$('br').onclick=()=>{cur=Math.min(D.ev.length,cur+1);draw()};
+['title','inst','comp','tempo','credit'].forEach(k=>{$(k).value=D[k]||'';$(k).oninput=()=>{D[k]=$(k).value;draw()}});
+$('start').value=D.start||1;$('start').oninput=()=>{D.start=Math.max(1,parseInt($('start').value)||1);draw()};
+['sec','note','ch'].forEach(k=>$(k).oninput=()=>{const e=D.ev[cur];if(e){e[k]=$(k).value;draw()}});
+function setD(j){D=Object.assign({title:'',inst:'Electric Bass',comp:'',tempo:'70',credit:'',start:1,legend:true,rests:false,ev:[]},j);if(!D.ev.length)D.ev=blank().ev;$('ckr').checked=!!D.rests;$('ckl').checked=D.legend!==false;cur=0;['title','inst','comp','tempo','credit'].forEach(k=>$(k).value=D[k]||'');$('start').value=D.start||1;draw()}
+$('bexp').onclick=()=>{$('iobox').classList.remove('hid');$('io').value=JSON.stringify(D);$('io').select();$('iomsg').textContent='Copy this text to keep a backup.'};
+$('bimp').onclick=()=>{$('iobox').classList.remove('hid');$('io').value='';$('iomsg').textContent='Paste, or choose a .json file.'};
+$('bload').onclick=()=>{try{const j=JSON.parse($('io').value);if(!j||!Array.isArray(j.ev))throw 0;setD(j);$('iomsg').textContent='Loaded.'}catch(e){$('iomsg').textContent='That text is not a valid tab.'}};
+$('file').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{$('io').value=r.result;$('bload').click()};r.readAsText(f)};
+$('ckr').checked=!!D.rests;$('ckl').checked=D.legend!==false;$('ckr').onchange=()=>{D.rests=$('ckr').checked;draw()};$('ckl').onchange=()=>{D.legend=$('ckl').checked;draw()};
+let dr=null;
+$('pages').addEventListener('pointerdown',e=>{const t=e.target.closest('[data-k]');if(!t)return;const sv=t.ownerSVGElement,i=+t.dataset.n,k=t.dataset.k,ev=D.ev[i];if(!ev)return;ev.o=ev.o||{};dr={t,i,k,x:e.clientX,y:e.clientY,o:(ev.o[k]||[0,0]).slice(),s:sv.viewBox.baseVal.width/sv.getBoundingClientRect().width};try{t.setPointerCapture(e.pointerId)}catch(x){}cur=i;e.preventDefault()});
+addEventListener('pointermove',e=>{if(!dr)return;const dx=(e.clientX-dr.x)*dr.s,dy=(e.clientY-dr.y)*dr.s;D.ev[dr.i].o[dr.k]=[Math.round((dr.o[0]+dx)*10)/10,Math.round((dr.o[1]+dy)*10)/10];dr.t.setAttribute('transform',`translate(${dx} ${dy})`)});
+addEventListener('pointerup',()=>{if(dr){dr=null;draw()}});
+document.querySelectorAll('[data-nc]').forEach(b=>b.onclick=()=>{const e=D.ev[cur];if(!e||!e.ch)return;const[dx,dy]=b.dataset.nc.split(',').map(Number);e.o=e.o||{};const o=e.o.ch||[0,0];e.o.ch=[o[0]+dx,o[1]+dy];draw()});
+$('bcr').onclick=()=>{const e=D.ev[cur];if(e){delete e.o;draw()}};
+function mkPDF(P){const E=new TextEncoder(),parts=[],off=[];let n=0;const w=b=>{const u=typeof b=='string'?E.encode(b):b;parts.push(u);n+=u.length};
+const o=(i,body)=>{off[i]=n;w(i+' 0 obj\n'+body+'\nendobj\n')};
+w('%PDF-1.4\n');const N=2+P.length*3;
+o(1,'<< /Type /Catalog /Pages 2 0 R >>');
+o(2,'<< /Type /Pages /Kids ['+P.map((_,i)=>(3+i*3)+' 0 R').join(' ')+'] /Count '+P.length+' >>');
+P.forEach((p,i)=>{const pg=3+i*3,ct=pg+1,im=pg+2,cs='q 595.28 0 0 841.89 0 0 cm /Im0 Do Q';
+o(pg,'<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595.28 841.89] /Resources << /XObject << /Im0 '+im+' 0 R >> >> /Contents '+ct+' 0 R >>');
+o(ct,'<< /Length '+cs.length+' >>\nstream\n'+cs+'\nendstream');
+off[im]=n;w(im+' 0 obj\n<< /Type /XObject /Subtype /Image /Width '+p.w+' /Height '+p.h+' /ColorSpace /DeviceRGB /BitsPerComponent 8 /Filter /DCTDecode /Length '+p.a.length+' >>\nstream\n');w(p.a);w('\nendstream\nendobj\n')});
+const x=n;let t='xref\n0 '+(N+1)+'\n0000000000 65535 f \n';for(let i=1;i<=N;i++)t+=String(off[i]).padStart(10,'0')+' 00000 n \n';
+w(t+'trailer\n<< /Size '+(N+1)+' /Root 1 0 R >>\nstartxref\n'+x+'\n%%EOF');
+return new Blob(parts,{type:'application/pdf'})}
+async function exportPDF(){
+const msg=$('pdfmsg'),btn=$('bpdf'),keep=cur;msg.textContent='Preparing PDF…';btn.disabled=true;cur=-1;draw();
+try{
+const SC=3,W2=595*SC,H2=842*SC,P=[];
+for(const s of document.querySelectorAll('svg.pg')){const c=s.cloneNode(true);c.querySelectorAll('.soft').forEach(e=>e.remove());c.setAttribute('xmlns','http://www.w3.org/2000/svg');c.setAttribute('width',W2);c.setAttribute('height',H2);
+const img=new Image();await new Promise((ok,no)=>{img.onload=ok;img.onerror=no;img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(new XMLSerializer().serializeToString(c))});
+const cv=document.createElement('canvas');cv.width=W2;cv.height=H2;const x=cv.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,W2,H2);x.drawImage(img,0,0,W2,H2);
+const bin=atob(cv.toDataURL('image/jpeg',.92).split(',')[1]),a=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);P.push({a,w:W2,h:H2})}
+const blob=mkPDF(P),name=((D.title||'').replace(/[^\w\- ]+/g,'').trim()||'bass-tab')+'.pdf';
+let done=false;
+try{const dl=window.claude&&claude.use?await claude.use('downloads'):null;if(dl){await dl.save({filename:name,data:blob});msg.textContent='Saved.';done=true}}
+catch(e){if(e&&e.code=='declined'){msg.textContent='Cancelled.';done=true}}
+if(!done){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;document.body.appendChild(a);a.click();a.remove();msg.textContent='Download started. If nothing downloads, use Print and choose Save as PDF.'}
+}catch(e){msg.textContent='Could not make the PDF. Try Print and choose Save as PDF.'}
+cur=keep;draw();btn.disabled=false}
+$('bpdf').onclick=exportPDF;
+draw();
+</script></body></html>
